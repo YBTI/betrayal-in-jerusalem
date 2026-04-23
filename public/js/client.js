@@ -66,9 +66,14 @@ function updateColorPickerAvailability() {
 }
 
 document.getElementById('btn-join').addEventListener('click', () => {
-  const nameInput = document.getElementById('name-input');
-  const name      = (nameInput.value || '').trim() || `プレイヤー${Math.floor(Math.random()*1000)}`;
-  socket.emit('joinGame', { name, color: selectedColor });
+  const name = document.getElementById('name-input').value.trim();
+  const roomId = document.getElementById('room-id-input').value.trim() || 'default';
+  
+  if (!name) {
+    alert('名前を入力してください。');
+    return;
+  }
+  socket.emit('joinGame', { name, color: selectedColor, roomId });
 });
 
 document.getElementById('btn-start').addEventListener('click', () => {

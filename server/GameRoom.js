@@ -9,8 +9,9 @@ const {
 } = require('./constants');
 
 class GameRoom {
-  constructor(io) {
+  constructor(io, roomId) {
     this.io          = io;
+    this.roomId      = roomId;
     this.players     = new Map();   // Map<socketId, Player>
     this.bodies      = new Map();   // Map<bodyId, bodyObject>
     this.state       = GAME_STATE.LOBBY;
@@ -39,8 +40,11 @@ class GameRoom {
     this.judasHistory      = []; // { time, id, px, py }
     this.activeFootprints  = []; // { id, px, py }
 
-    // ゲームティック
-    this.tickInterval = null;
+    this.timer = setInterval(() => this.tick(), PARAMS.GAME_TICK_MS);
+  }
+
+  destroy() {
+    clearInterval(this.timer);
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -76,7 +80,7 @@ class GameRoom {
   removePlayer(socketId) {
     if (!this.players.has(socketId)) return;
     this.players.delete(socketId);
-    this.io.to('gameRoom').emit('playerLeft', { playerId: socketId });
+    this.io.to(this.roomId).emit('playerLeft', { playerId: socketId });
 
     if (this.state === GAME_STATE.ACTION_PHASE) this.checkVictory();
     if (this.players.size === 0) this.resetGame();
@@ -126,7 +130,7 @@ class GameRoom {
 
     // 全員にゲーム状態を（役割付きで）送信
     this.broadcastGameState();
-    this.io.to('gameRoom').emit('phaseChange', { phase: GAME_STATE.ACTION_PHASE });
+    this.io.to(this.roomId).emit('phaseChange', { phase: GAME_STATE.ACTION_PHASE });
   }
 
   assignRoles() {
@@ -181,7 +185,7 @@ class GameRoom {
     }
     if (newPhase !== this.currentPhase) {
       this.currentPhase = newPhase;
-      this.io.to('gameRoom').emit('phaseAdvanced', { phase: newPhase });
+      this.io.to(this.roomId).emit('phaseAdvanced', { phase: newPhase });
     }
   }
 
@@ -267,7 +271,7 @@ class GameRoom {
       if (this.activeSabotage.timer <= 0) {
         this.lockedDoors.delete(this.activeSabotage.doorKey);
         this.activeSabotage = null;
-        this.io.to('gameRoom').emit('sabotageEnded', { type: SABOTAGE.DOOR_LOCK });
+        this.io.to(this.roomId).emit('sabotageEnded', { type: SABOTAGE.DOOR_LOCK });
       }
     } else if (this.activeSabotage.type === SABOTAGE.CRITICAL_EMERGENCY) {
       this.activeSabotage.timer -= dt;
@@ -276,7 +280,7 @@ class GameRoom {
       const prevSec = Math.ceil((this.activeSabotage.timer + dt) / 1000);
       const currSec = Math.ceil(this.activeSabotage.timer       / 1000);
       if (currSec !== prevSec) {
-        this.io.to('gameRoom').emit('criticalTimerUpdate', {
+        this.io.to(this.roomId).emit('criticalTimerUpdate', {
           remaining: Math.max(0, this.activeSabotage.timer)
         });
       }
@@ -291,7 +295,7 @@ class GameRoom {
         this.activeSabotage = null;
         this.criticalRepairs.clear();
         this.sabotageCooldown = PARAMS.SABOTAGE_COOLDOWN_MS;
-        this.io.to('gameRoom').emit('sabotageEnded', { type: SABOTAGE.CRITICAL_EMERGENCY });
+        this.io.to(this.roomId).emit('sabotageEnded', { type: SABOTAGE.CRITICAL_EMERGENCY });
       }
     }
   }
@@ -301,7 +305,7 @@ class GameRoom {
     this.players.forEach(p => {
       positions.push({ id: p.id, px: p.px, py: p.py, status: p.status });
     });
-    this.io.to('gameRoom').emit('positions', {
+    this.io.to(this.roomId).emit('positions', {
       positions,
       footprints: this.activeFootprints.map(f => ({px: f.px, py: f.py}))
     });
@@ -347,7 +351,7 @@ class GameRoom {
     };
     this.bodies.set(bodyId, body);
 
-    this.io.to('gameRoom').emit('playerArrested', { targetId, killerId, body });
+    this.io.to(this.roomId).emit('playerArrested', { targetId, killerId, body });
     this.checkVictory();
   }
 
@@ -390,7 +394,7 @@ class GameRoom {
 
     if (player.isApostle() && !this.completedTasks.has(taskId)) {
       this.completedTasks.add(taskId);
-      this.io.to('gameRoom').emit('taskProgress', {
+      this.io.to(this.roomId).emit('taskProgress', {
         taskId,
         completedByName: player.name,
         totalCompleted:  this.completedTasks.size,
@@ -406,7 +410,7 @@ class GameRoom {
       if (this.activeSabotage?.type === SABOTAGE.BLINDNESS)
         this.activeSabotage = null;
       this.sabotageCooldown = PARAMS.SABOTAGE_COOLDOWN_MS;
-      this.io.to('gameRoom').emit('sabotageEnded', { type: SABOTAGE.BLINDNESS });
+      this.io.to(this.roomId).emit('sabotageEnded', { type: SABOTAGE.BLINDNESS });
     }
   }
 
@@ -426,7 +430,7 @@ class GameRoom {
 
     this.completedTasks.delete(taskId);
     
-    this.io.to('gameRoom').emit('taskProgress', {
+    this.io.to(this.roomId).emit('taskProgress', {
       taskId,
       destroyed: true, // タスク破壊フラグ
       totalCompleted: this.completedTasks.size,
@@ -464,7 +468,7 @@ class GameRoom {
     player.px = destPx;
     player.py = destPy;
 
-    this.io.to('gameRoom').emit('ventUsed', {
+    this.io.to(this.roomId).emit('ventUsed', {
       playerId: socketId, fromVent: ventId, toVent: destId, destPx, destPy
     });
   }
@@ -484,7 +488,7 @@ class GameRoom {
         this.lockedDoors.add(key);
         this.activeSabotage   = { type, timer: PARAMS.DOOR_LOCK_MS, doorKey: key, doorId: targetId };
         this.sabotageCooldown = PARAMS.SABOTAGE_COOLDOWN_MS;
-        this.io.to('gameRoom').emit('sabotageActivated', {
+        this.io.to(this.roomId).emit('sabotageActivated', {
           type, doorId: targetId, doorName: door.name, duration: PARAMS.DOOR_LOCK_MS
         });
         break;
@@ -494,14 +498,14 @@ class GameRoom {
         this.blindnessActive  = true;
         this.activeSabotage   = { type };
         this.sabotageCooldown = PARAMS.SABOTAGE_COOLDOWN_MS;
-        this.io.to('gameRoom').emit('sabotageActivated', { type });
+        this.io.to(this.roomId).emit('sabotageActivated', { type });
         break;
       }
       case SABOTAGE.CRITICAL_EMERGENCY: {
         if (this.activeSabotage?.type === SABOTAGE.CRITICAL_EMERGENCY) return;
         this.criticalRepairs.clear();
         this.activeSabotage = { type, timer: PARAMS.CRITICAL_TIMER_MS };
-        this.io.to('gameRoom').emit('sabotageActivated', {
+        this.io.to(this.roomId).emit('sabotageActivated', {
           type,
           duration: PARAMS.CRITICAL_TIMER_MS,
           repairPoints: REPAIR_POINTS
@@ -525,7 +529,7 @@ class GameRoom {
 
       if (!this.criticalRepairs.has(repairId)) {
         this.criticalRepairs.add(repairId);
-        this.io.to('gameRoom').emit('repairProgress', {
+        this.io.to(this.roomId).emit('repairProgress', {
           repairId, repairedCount: this.criticalRepairs.size
         });
       }
@@ -550,11 +554,11 @@ class GameRoom {
     this.placePlayersAtSpawn();
 
     const playerList = this.getPlayerList();
-    this.io.to('gameRoom').emit('meetingStart', {
+    this.io.to(this.roomId).emit('meetingStart', {
       reason, players: playerList,
       phase: 'discussion', timer: PARAMS.DISCUSSION_TIME_MS
     });
-    this.io.to('gameRoom').emit('phaseChange', { phase: GAME_STATE.MEETING_PHASE });
+    this.io.to(this.roomId).emit('phaseChange', { phase: GAME_STATE.MEETING_PHASE });
   }
 
   updateMeetingTimer() {
@@ -565,13 +569,13 @@ class GameRoom {
     const prevSec = Math.ceil((this.meetingTimer + dt) / 1000);
     const currSec = Math.ceil(this.meetingTimer       / 1000);
     if (currSec !== prevSec) {
-      this.io.to('gameRoom').emit('meetingTimer', { remaining: Math.max(0, this.meetingTimer) });
+      this.io.to(this.roomId).emit('meetingTimer', { remaining: Math.max(0, this.meetingTimer) });
     }
 
     if (this.meetingPhase === 'discussion' && this.meetingTimer <= 0) {
       this.meetingPhase = 'voting';
       this.meetingTimer = PARAMS.VOTING_TIME_MS;
-      this.io.to('gameRoom').emit('meetingPhaseChange', {
+      this.io.to(this.roomId).emit('meetingPhaseChange', {
         phase: 'voting', timer: PARAMS.VOTING_TIME_MS
       });
     } else if (this.meetingPhase === 'voting' && this.meetingTimer <= 0) {
@@ -591,7 +595,7 @@ class GameRoom {
       text: String(text).slice(0, 200)
     };
     this.chatMessages.push(msg);
-    this.io.to('gameRoom').emit('chatMessage', msg);
+    this.io.to(this.roomId).emit('chatMessage', msg);
   }
 
   processVote(voterId, targetId) {
@@ -602,7 +606,7 @@ class GameRoom {
     if (targetId !== 'skip' && !this.players.get(targetId).isAlive()) return;
 
     this.votes.set(voterId, targetId);
-    this.io.to('gameRoom').emit('voteSubmitted', { voterId, voterName: voter.name });
+    this.io.to(this.roomId).emit('voteSubmitted', { voterId, voterName: voter.name });
 
     // 全員投票済みなら即集計
     const aliveCount = Array.from(this.players.values()).filter(p => p.isAlive()).length;
@@ -643,7 +647,7 @@ class GameRoom {
       voteLog.push({ voterId: vid, voterName: voter?.name ?? '?', targetId: tid });
     });
 
-    this.io.to('gameRoom').emit('voteResult', {
+    this.io.to(this.roomId).emit('voteResult', {
       ejected, tied,
       tally: Object.fromEntries(tally),
       votes: voteLog
@@ -663,7 +667,7 @@ class GameRoom {
 
     this.state = GAME_STATE.ACTION_PHASE;
     this.broadcastGameState();
-    this.io.to('gameRoom').emit('phaseChange', { phase: GAME_STATE.ACTION_PHASE });
+    this.io.to(this.roomId).emit('phaseChange', { phase: GAME_STATE.ACTION_PHASE });
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -707,8 +711,8 @@ class GameRoom {
       playerData.push({ id: p.id, name: p.name, role: p.role, status: p.status, color: p.color });
     });
 
-    this.io.to('gameRoom').emit('gameResult', { winner, reason, players: playerData });
-    this.io.to('gameRoom').emit('phaseChange', { phase: GAME_STATE.RESULT_PHASE });
+    this.io.to(this.roomId).emit('gameResult', { winner, reason, players: playerData });
+    this.io.to(this.roomId).emit('phaseChange', { phase: GAME_STATE.RESULT_PHASE });
 
     // 30秒後にロビーへ
     setTimeout(() => this.resetGame(), 30000);
@@ -738,7 +742,7 @@ class GameRoom {
       p.emergencyCallsLeft = PARAMS.EMERGENCY_CALLS_PER_PLAYER;
       p.dx = 0; p.dy = 0;
     });
-    this.io.to('gameRoom').emit('phaseChange', { phase: GAME_STATE.LOBBY });
+    this.io.to(this.roomId).emit('phaseChange', { phase: GAME_STATE.LOBBY });
     this.broadcastGameState();
   }
 

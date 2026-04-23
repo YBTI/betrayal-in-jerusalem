@@ -138,7 +138,7 @@ html, body {
   display: flex; gap: 10px;
 }
 
-#name-input {
+#name-input, #room-id-input {
   flex: 1;
   background: rgba(0,0,0,0.5);
   border: 1px solid var(--border-gold);
@@ -150,8 +150,8 @@ html, body {
   outline: none;
   transition: border-color 0.2s;
 }
-#name-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,168,76,0.15); }
-#name-input::placeholder { color: var(--text-dim); }
+#name-input:focus, #room-id-input:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,168,76,0.15); }
+#name-input::placeholder, #room-id-input::placeholder { color: var(--text-dim); }
 
 .btn-primary {
   background: linear-gradient(135deg, #8B6914, #C9A84C);
