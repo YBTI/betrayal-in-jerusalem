@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Betrayal in Jerusalem — マルチプレイヤー ソーシャルディダクション</title>
+  <meta name="description" content="聖書テーマのリアルタイムマルチプレイヤー社会的推理ゲーム。使徒かユダか、疑惑と陰謀の夜を生き延びよ。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/main.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+     ロビー画面
+══════════════════════════════════════════════ -->
+<div id="lobby-screen" class="screen">
+  <div class="lobby-bg-overlay"></div>
+
+  <header class="lobby-header">
+    <h1 class="game-title">Betrayal<br><span>in Jerusalem</span></h1>
+    <p class="game-subtitle">— 裏切り者は誰だ？ —</p>
+  </header>
+
+  <main class="lobby-main">
+    <!-- 参加フォーム -->
+    <section class="lobby-card join-card">
+      <h2>🕯 参加する</h2>
+      <div id="color-picker" class="color-picker">
+        <!-- SVGカラーボタンがJSで挿入される -->
+      </div>
+      <div class="input-row">
+        <input id="name-input" type="text" maxlength="16"
+               placeholder="あなたの名前を入力..."
+               autocomplete="off" />
+        <button id="btn-join" class="btn-primary">参加</button>
+      </div>
+    </section>
+
+    <!-- プレイヤーリスト -->
+    <section class="lobby-card players-card">
+      <div class="players-header">
+        <h2>🙏 待機中のプレイヤー</h2>
+        <span id="lobby-player-count" class="player-count">0 / 10 人</span>
+      </div>
+      <div id="lobby-player-list" class="lobby-player-list">
+        <div class="empty-hint">参加するとここに表示されます</div>
+      </div>
+    </section>
+
+    <!-- ゲーム開始 -->
+    <section class="lobby-card start-card">
+      <button id="btn-start" class="btn-start">
+        ✝ ゲームを開始する
+      </button>
+      <p class="start-hint">※ 最低2人（デバッグモード）で開始可能</p>
+    </section>
+
+    <!-- 操作説明 -->
+    <section class="lobby-card howto-card">
+      <h2>📜 操作方法</h2>
+      <div class="howto-grid">
+        <div class="howto-item"><kbd>W A S D</kbd> 移動</div>
+        <div class="howto-item"><kbd>E</kbd> 最寄りアクション実行</div>
+        <div class="howto-item"><span class="role-apostle">✝ 使徒</span> タスクを達成し平和を守れ</div>
+        <div class="howto-item"><span class="role-judas">🗡 ユダ</span> 仲間を装い使徒を排除せよ</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ゲーム画面
+══════════════════════════════════════════════ -->
+<div id="game-screen" class="screen" style="display:none">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- アクションボタン（画面下部中央） -->
+  <div id="action-bar">
+    <button id="btn-task"      class="action-btn" disabled>⚡ タスク</button>
+    <button id="btn-report"    class="action-btn" disabled>📜 報告</button>
+    <button id="btn-kill"      class="action-btn kill-btn" disabled>⚔ 捕縛</button>
+    <button id="btn-emergency" class="action-btn" disabled>🔔 緊急招集</button>
+    <button id="btn-vent"      class="action-btn judas-btn" disabled>🌀 抜け道</button>
+    <button id="btn-sabotage"  class="action-btn judas-btn" disabled>⚡ 妨害</button>
+    <button id="btn-repair"    class="action-btn repair-btn" disabled>🔧 修理</button>
+  </div>
+
+  <!-- タスク実行プログレスバー (廃止) -->
+  <!--
+  <div id="task-progress-panel" style="display:none">
+    <div id="task-anim-name">タスク名</div>
+    <div class="task-anim-bar">
+      <div id="task-anim-fill"></div>
+    </div>
+    <div class="task-anim-hint">Eキーを押したままにしてください…</div>
+  </div>
+  -->
+
+  <!-- ミニゲーム用オーバーレイ -->
+  <div id="minigame-overlay" style="display:none">
+    <div class="mg-inner" id="mg-content">
+      <div class="mg-header">
+        <h2 id="mg-title">タスク実行</h2>
+        <button id="btn-mg-close" class="btn-mg-close">✖</button>
+      </div>
+      
+      <div class="mg-body">
+        <!-- 1. Typing Game -->
+        <div id="mg-typing" class="mg-game-container">
+          <p id="mg-typing-inst" class="mg-inst"></p>
+          <div id="mg-typing-word" class="mg-typing-word"></div>
+        </div>
+        
+        <!-- 2. Gauge Game -->
+        <div id="mg-gauge" class="mg-game-container">
+          <p id="mg-gauge-inst" class="mg-inst"></p>
+          <div class="mg-gauge-track">
+            <div id="mg-gauge-target" class="mg-gauge-target"></div>
+            <div id="mg-gauge-fill" class="mg-gauge-fill"></div>
+          </div>
+        </div>
+
+        <!-- 3. Sequence Game -->
+        <div id="mg-sequence" class="mg-game-container">
+           <p class="mg-inst">番号を順番にタップせよ</p>
+           <div id="mg-seq-area" class="mg-seq-area"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ゴーストフェード（捕縛された瞬間） -->
+  <div id="ghost-fade"></div>
+
+  <!-- サボタージュ警告 -->
+  <div id="sabotage-alert" style="display:none">
+    <div id="sabotage-alert-text"></div>
+    <div id="critical-timer-display">
+      残り <span id="critical-timer-sec">--</span> 秒
+    </div>
+  </div>
+
+  <!-- サボタージュパネル（Judas専用） -->
+  <div id="sabotage-panel" style="display:none">
+    <div class="sab-panel-inner">
+      <h3>🗡 妨害を選択</h3>
+      <div id="sabotage-options"></div>
+      <button id="btn-sab-close" class="btn-sab-cancel">✕ キャンセル</button>
+    </div>
+  </div>
+
+  <!-- 会議オーバーレイ -->
+  <div id="meeting-overlay" style="display:none">
+    <div class="meeting-inner">
+      <div class="meeting-header">
+        <span id="phase-label" class="phase-label">💬 議論タイム</span>
+        <h2 id="meeting-reason" class="meeting-reason"></h2>
+        <div id="meeting-timer-display" class="meeting-timer"></div>
+      </div>
+      <div class="meeting-body">
+        <!-- チャット -->
+        <div class="chat-panel">
+          <div id="chat-messages" class="chat-messages"></div>
+          <div id="chat-input-area" class="chat-input-area">
+            <input id="chat-input" type="text" maxlength="200"
+                   placeholder="発言する..." autocomplete="off" />
+            <button id="btn-send-chat" class="btn-send">送信</button>
+          </div>
+        </div>
+        <!-- 投票 -->
+        <div id="vote-area" class="vote-panel" style="display:none">
+          <div id="vote-player-list" class="vote-player-list"></div>
+          <button id="btn-skip-vote" class="btn-skip">⌛ スキップ（誰にも投票しない）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 投票結果オーバーレイ -->
+  <div id="vote-result-overlay" style="display:none">
+    <div class="vr-inner">
+      <h2 id="vr-title"></h2>
+      <div id="vr-details" class="vr-details"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     結果画面
+══════════════════════════════════════════════ -->
+<div id="result-screen" class="screen" style="display:none">
+  <div class="result-bg"></div>
+  <div class="result-inner">
+    <h1 id="result-title" class="result-title"></h1>
+    <p  id="result-reason" class="result-reason"></p>
+    <div id="result-player-list" class="result-player-list"></div>
+    <button id="btn-back-lobby" class="btn-primary btn-back">
+      ↩ ロビーに戻る
+    </button>
+  </div>
+</div>
+
+<!-- ── スクリプト ─────────────────────────────────────── -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/constants.js"></script>
+<script src="/js/Map.js"></script>
+<script src="/js/FogOfWar.js"></script>
+<script src="/js/Renderer.js"></script>
+<script src="/js/Minigames.js"></script>
+<script src="/js/UI.js"></script>
+<script src="/js/GameClient.js"></script>
+<script src="/js/client.js"></script>
+</body>
+</html>
