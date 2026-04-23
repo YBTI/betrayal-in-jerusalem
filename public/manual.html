@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betrayal in Jerusalem — Beginner's Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #D4AF37;
+            --dark-bg: #1A120B;
+            --card-bg: #2C1F15;
+            --text-color: #EADBC8;
+        }
+        body {
+            background: var(--dark-bg);
+            color: var(--text-color);
+            font-family: 'Noto Serif JP', serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .manual-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Slide / Section Style */
+        .section {
+            background: var(--card-bg);
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            padding: 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            page-break-after: always; /* PDF印刷時に改ページ */
+            position: relative;
+            overflow: hidden;
+        }
+        .section::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+        }
+
+        h1, h2, h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            text-align: center;
+        }
+        h1 { font-size: 3rem; margin-bottom: 10px; }
+        h2 { font-size: 2.2rem; border-bottom: 1px solid rgba(212, 175, 55, 0.3); padding-bottom: 15px; margin-top: 0; }
+        
+        .cover {
+            text-align: center;
+            padding: 100px 20px;
+        }
+        .cover img {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .role-box {
+            padding: 20px;
+            border-radius: 6px;
+            background: rgba(0,0,0,0.2);
+        }
+        .role-box.apostle { border-left: 5px solid #3498DB; }
+        .role-box.judas   { border-left: 5px solid #E74C3C; }
+
+        .key {
+            display: inline-block;
+            background: #444;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            border-bottom: 3px solid #222;
+        }
+
+        ul { padding-left: 20px; }
+        li { margin-bottom: 12px; }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 40px;
+        }
+
+        @media print {
+            body { background: white; color: black; }
+            .section { border: 1px solid #333; box-shadow: none; background: white; margin-bottom: 0; }
+            h2, h3, .gold { color: #841; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="manual-container">
+    <!-- Slide 1: Cover -->
+    <div class="section cover">
+        <h1>Betrayal<br>in Jerusalem</h1>
+        <p style="font-size: 1.5rem; letter-spacing: 5px;">BEGINNER'S GUIDE</p>
+        <p>— 取扱説明書 / 初心者向けガイド —</p>
+        <!-- 下記画像は、実際に生成された画像名に置き換えて表示すること -->
+        <img src="beginner_guide_cover_1776918331111.png" alt="Game Cover">
+    </div>
+
+    <!-- Slide 2: Overview & Controls -->
+    <div class="section">
+        <h2>📜 基本操作と概要</h2>
+        <p>使徒（Apostle）の群れに紛れ込んだ裏切り者のユダ（Judas）を見つけ出すか、あるいは全員を破滅に追い込むか。エルサレムの夜を舞台にした緊迫の心理戦が始まります。</p>
+        
+        <div class="grid">
+            <div>
+                <h3>🎮 操作方法</h3>
+                <ul>
+                    <li><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> : 移動</li>
+                    <li><span class="key">E</span> キー : アクション実行</li>
+                    <li><span class="key">マウス</span> : ミニゲーム操作</li>
+                </ul>
+            </div>
+            <div>
+                <h3>📍 インタラクション</h3>
+                <p>黄色い！マークの場所で <span class="key">E</span> を押し、タスク（ミニゲーム）を完遂せよ。仲間の遺体を見つけたら <span class="key">E</span> で即座に報告、会議を招集できます。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Roles -->
+    <div class="section">
+        <h2>🙏 陣営と勝利条件</h2>
+        <div class="grid">
+            <div class="role-box apostle">
+                <h3>✝ 使徒 (Apostle)</h3>
+                <p><b>勝利条件:</b><br>1. すべてのタスクを完了させる<br>2. 議論でユダを追放する</p>
+                <ul>
+                    <li>マップ上のタスクを優先して行う</li>
+                    <li>怪しい人物がいないか注視する</li>
+                    <li>緊急時は食堂の鐘を鳴らす</li>
+                </ul>
+            </div>
+            <div class="role-box judas">
+                <h3>🗡 ユダ (Judas)</h3>
+                <p><b>勝利条件:</b><br>1. 使徒を捕縛し、自分と同数にする<br>2. 緊急妨害工作で時間切れにする</p>
+                <ul>
+                    <li>正体を隠し、背後から捕縛する</li>
+                    <li>ベント（抜け道）を使い神出鬼没に動く</li>
+                    <li>サボタージュで使徒の邪魔をする</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Mechanics -->
+    <div class="section">
+        <h2>🌑 独自のシステム</h2>
+        <h3>⌛ 運命の刻（フェーズ制）</h3>
+        <p>時間とともにフェーズが「宵 → 深夜 → 暁」と進みます。フェーズが上がるとミニゲームが難しくなり、使徒はより不利になります。</p>
+        
+        <h3>👣 背信の痕跡（赤い足跡）</h3>
+        <p>ユダが移動した際には、数秒後に「赤い足跡」が浮かび上がります。フェーズが進むほど足跡が出るまでの時間が短縮され、ユダは特定されるリスクが高まります！</p>
+        
+        <h3>🔥 タスク破壊</h3>
+        <p>ユダは完了済みのタスクを破壊（未完了に巻き戻し）できます。使徒の進捗を絶望の淵へ叩き落としましょう。</p>
+    </div>
+
+    <!-- Slide 5: Meeting -->
+    <div class="section">
+        <h2>💬 議論と追放</h2>
+        <p>死体の発見、または緊急ボタンによって会議が開かれます。</p>
+        <ul>
+            <li><b>議論タイム</b>: チャットツールを使い、アリバイや目撃情報を共有しましょう。</li>
+            <li><b>投票タイム</b>: 最も怪しい人物に投票します。「スキップ」して様子を見ることも可能です。</li>
+            <li><b>追放</b>: 最多票を得た者が追放されます。その正体（使徒かユダか）が判明します。</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        © 2026 Betrayal in Jerusalem Development Team
+    </div>
+</div>
+
+</body>
+</html>

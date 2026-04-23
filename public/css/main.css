@@ -233,6 +233,24 @@ kbd {
 .role-judas   { color: var(--judas-color);   font-size: 1.1rem;
 }
 
+.manual-link {
+  display: inline-block;
+  color: var(--gold);
+  text-decoration: none;
+  font-size: 0.75rem;
+  border: 1px solid var(--border-gold);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  text-align: center;
+  line-height: 1.2;
+}
+.manual-link:hover {
+  background: rgba(180, 140, 60, 0.15);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+}
+
 /* ── カラーピッカー ────────────────────────────── */
 .color-picker {
   display: flex;
